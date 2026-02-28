@@ -85,12 +85,12 @@ export default function ResultPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <header className="bg-gradient-to-r from-emerald-900 to-green-950 text-white">
         <div className="max-w-2xl mx-auto px-4 py-8 text-center">
-          <p className="text-blue-200 text-sm mb-2">{modeLabel}</p>
+          <p className="text-emerald-200 text-sm mb-2">{modeLabel}</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">学習結果</h1>
           {attempt.level && (
-            <p className="text-blue-200 text-sm">Lv.{attempt.level} {LEVEL_LABELS[attempt.level]}</p>
+            <p className="text-emerald-200 text-sm">Lv.{attempt.level} {LEVEL_LABELS[attempt.level]}</p>
           )}
         </div>
       </header>
@@ -162,7 +162,7 @@ export default function ResultPage() {
         <div className="space-y-3">
           <button
             onClick={() => router.push("/")}
-            className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full py-3 rounded-xl bg-emerald-700 text-white font-semibold hover:bg-emerald-800 transition-colors"
           >
             🏠 トップに戻る
           </button>
