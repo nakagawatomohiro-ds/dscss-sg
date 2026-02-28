@@ -55,8 +55,8 @@ export default function QuestionCard({
   const getChoiceStyle = (idx: number) => {
     const base = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm md:text-base";
     if (!result) {
-      if (selected === idx) return `${base} border-blue-500 bg-blue-50`;
-      return `${base} border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 active:scale-[0.98]`;
+      if (selected === idx) return `${base} border-emerald-600 bg-emerald-50`;
+      return `${base} border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 active:scale-[0.98]`;
     }
     // After answer
     if (idx === result.correctDisplayIndex) {
@@ -72,7 +72,7 @@ export default function QuestionCard({
     <div className="w-full max-w-2xl mx-auto">
       {/* Category & Level badge */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
           {question.category}
         </span>
         <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
@@ -129,7 +129,7 @@ export default function QuestionCard({
       {result && (
         <button
           onClick={handleNext}
-          className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-base hover:bg-blue-700 transition-colors active:scale-[0.98]"
+          className="w-full py-3 rounded-xl bg-emerald-700 text-white font-semibold text-base hover:bg-emerald-800 transition-colors active:scale-[0.98]"
         >
           {isLast ? "結果を見る" : "次の問題へ →"}
         </button>
