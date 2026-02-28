@@ -105,12 +105,12 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <header className="bg-gradient-to-r from-emerald-900 to-green-950 text-white">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">
             🛡️ 情報セキュリティマネジメント
           </h1>
-          <p className="text-blue-100 text-sm">学習アプリ — 全270問</p>
+          <p className="text-emerald-200 text-sm">学習アプリ — 全270問</p>
         </div>
       </header>
 
@@ -144,7 +144,7 @@ export default function Home() {
               <button
                 onClick={() => startAttempt("mock")}
                 disabled={starting}
-                className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="w-full py-3 rounded-xl bg-emerald-700 text-white font-semibold hover:bg-emerald-800 disabled:opacity-50 transition-colors"
               >
                 模擬試験を開始
               </button>
@@ -196,7 +196,7 @@ export default function Home() {
                               key={lv}
                               onClick={() => startAttempt("learn", cat, lv)}
                               disabled={starting}
-                              className="p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-center disabled:opacity-50"
+                              className="p-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all text-center disabled:opacity-50"
                             >
                               <div className="text-xs text-gray-500 mb-1">
                                 Lv.{lv} {LEVEL_LABELS[lv]}
@@ -248,7 +248,7 @@ export default function Home() {
                       </div>
                       <div className="text-right">
                         {a.status === "finished" ? (
-                          <span className="text-blue-600 font-semibold">
+                          <span className="text-emerald-700 font-semibold">
                             {a.correct_count}/{a.total_questions}
                           </span>
                         ) : (
