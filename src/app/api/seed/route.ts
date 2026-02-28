@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
-import { initializeSchema } from "@/lib/schema";
 import { upsertQuestion, getQuestionCount } from "@/lib/repository";
 import { sgQuestions } from "@/lib/sgCategories";
 
+const USE_DB = !!process.env.DATABASE_URL;
+
 export async function POST() {
   try {
-    // Initialize schema
-    await initializeSchema();
+    // Initialize schema only when DB is available
+    if (USE_DB) {
+      const { initializeSchema } = await import("@/lib/schema");
+      await initializeSchema();
+    }
 
     // Check if already seeded
     const count = await getQuestionCount();
