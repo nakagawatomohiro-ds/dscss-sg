@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { QuestionForClient, LEVEL_LABELS } from "@/lib/types";
+import Spinner from "@/components/Spinner";
 
 interface AnswerResult {
   isCorrect: boolean;
@@ -31,9 +32,9 @@ export default function QuestionCard({
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [nextLoading, setNextLoading] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to result when answer is submitted
   useEffect(() => {
     if (result && resultRef.current) {
       setTimeout(() => {
@@ -56,10 +57,15 @@ export default function QuestionCard({
     }
   };
 
-  const handleNext = () => {
-    setSelected(null);
-    setResult(null);
-    onNext();
+  const handleNext = async () => {
+    setNextLoading(true);
+    try {
+      setSelected(null);
+      setResult(null);
+      await onNext();
+    } finally {
+      setNextLoading(false);
+    }
   };
 
   const getChoiceStyle = (idx: number) => {
@@ -67,12 +73,12 @@ export default function QuestionCard({
       "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm md:text-base";
 
     if (!result) {
-      if (selected === idx)
-        return `${base} border-emerald-600 bg-emerald-50`;
+      if (selected === idx && loading)
+        return `${base} border-emerald-600 bg-emerald-50 opacity-75`;
+      if (selected === idx) return `${base} border-emerald-600 bg-emerald-50`;
       return `${base} border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 active:scale-[0.98]`;
     }
 
-    // After answer
     if (idx === result.correctDisplayIndex) {
       return `${base} border-green-500 bg-green-50 font-semibold`;
     }
@@ -116,12 +122,24 @@ export default function QuestionCard({
             className={getChoiceStyle(idx)}
           >
             <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold mr-3 shrink-0">
-              {["A", "B", "C", "D"][idx]}
+              {selected === idx && loading ? (
+                <Spinner size="sm" color="emerald" />
+              ) : (
+                ["A", "B", "C", "D"][idx]
+              )}
             </span>
             <span>{choice}</span>
           </button>
         ))}
       </div>
+
+      {/* Loading indicator while checking answer */}
+      {loading && (
+        <div className="flex items-center justify-center gap-2 py-3 text-emerald-600 text-sm">
+          <Spinner size="sm" color="emerald" />
+          <span>回答を確認中...</span>
+        </div>
+      )}
 
       {/* Result & Explanation */}
       {result && (
@@ -147,9 +165,17 @@ export default function QuestionCard({
         <div className="sticky bottom-0 pb-4 pt-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent -mx-4 px-4">
           <button
             onClick={handleNext}
-            className="w-full py-4 rounded-xl bg-emerald-700 text-white font-semibold text-lg hover:bg-emerald-800 transition-colors active:scale-[0.98] shadow-lg"
+            disabled={nextLoading}
+            className="w-full py-4 rounded-xl bg-emerald-700 text-white font-semibold text-lg hover:bg-emerald-800 transition-colors active:scale-[0.98] shadow-lg disabled:opacity-75"
           >
-            {isLast ? "結果を見る" : "次の問題へ →"}
+            {nextLoading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Spinner size="sm" color="white" />
+                <span>{isLast ? "結果を集計中..." : "次の問題を準備中..."}</span>
+              </span>
+            ) : (
+              isLast ? "結果を見る" : "次の問題へ →"
+            )}
           </button>
         </div>
       )}
