@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { QuestionForClient, LEVEL_LABELS } from "@/lib/types";
 
 interface AnswerResult {
@@ -31,6 +31,16 @@ export default function QuestionCard({
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to result when answer is submitted
+  useEffect(() => {
+    if (result && resultRef.current) {
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  }, [result]);
 
   const handleSelect = async (displayIndex: number) => {
     if (result || loading || alreadyAnswered) return;
@@ -53,11 +63,15 @@ export default function QuestionCard({
   };
 
   const getChoiceStyle = (idx: number) => {
-    const base = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm md:text-base";
+    const base =
+      "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm md:text-base";
+
     if (!result) {
-      if (selected === idx) return `${base} border-emerald-600 bg-emerald-50`;
+      if (selected === idx)
+        return `${base} border-emerald-600 bg-emerald-50`;
       return `${base} border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 active:scale-[0.98]`;
     }
+
     // After answer
     if (idx === result.correctDisplayIndex) {
       return `${base} border-green-500 bg-green-50 font-semibold`;
@@ -112,6 +126,7 @@ export default function QuestionCard({
       {/* Result & Explanation */}
       {result && (
         <div
+          ref={resultRef}
           className={`rounded-2xl p-5 mb-5 ${
             result.isCorrect
               ? "bg-green-50 border border-green-200"
@@ -121,18 +136,22 @@ export default function QuestionCard({
           <p className="font-bold text-lg mb-2">
             {result.isCorrect ? "✅ 正解！" : "❌ 不正解"}
           </p>
-          <p className="text-sm text-gray-700 leading-relaxed">{result.explanation}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {result.explanation}
+          </p>
         </div>
       )}
 
-      {/* Next button */}
+      {/* Next button - sticky on mobile for easy access */}
       {result && (
-        <button
-          onClick={handleNext}
-          className="w-full py-3 rounded-xl bg-emerald-700 text-white font-semibold text-base hover:bg-emerald-800 transition-colors active:scale-[0.98]"
-        >
-          {isLast ? "結果を見る" : "次の問題へ →"}
-        </button>
+        <div className="sticky bottom-0 pb-4 pt-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent -mx-4 px-4">
+          <button
+            onClick={handleNext}
+            className="w-full py-4 rounded-xl bg-emerald-700 text-white font-semibold text-lg hover:bg-emerald-800 transition-colors active:scale-[0.98] shadow-lg"
+          >
+            {isLast ? "結果を見る" : "次の問題へ →"}
+          </button>
+        </div>
       )}
     </div>
   );
