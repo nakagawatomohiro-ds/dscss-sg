@@ -204,7 +204,7 @@ export async function insertAttemptQuestions(questions: {
   const placeholders: string[] = [];
   questions.forEach((q, i) => {
     const offset = i * 4;
-    placeholders.push(`(${offset + 1}, ${offset + 2}, ${offset + 3}, ${offset + 4})`);
+    placeholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
     values.push(q.attempt_id, q.question_id, q.display_order, JSON.stringify(q.choice_order));
   });
   await dbQuery(
