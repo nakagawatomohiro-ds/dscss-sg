@@ -199,13 +199,19 @@ export async function insertAttemptQuestions(questions: {
     _attemptQuestions.set(questions[0]?.attempt_id, [...existing, ...rows]);
     return;
   }
-  for (const q of questions) {
-    await dbQuery(
-      `INSERT INTO attempt_questions (attempt_id, question_id, display_order, choice_order)
-       VALUES ($1, $2, $3, $4)`,
-      [q.attempt_id, q.question_id, q.display_order, JSON.stringify(q.choice_order)]
-    );
-  }
+  // Batch INSERT: single query for all questions
+  const values: unknown[] = [];
+  const placeholders: string[] = [];
+  questions.forEach((q, i) => {
+    const offset = i * 4;
+    placeholders.push(`(${offset + 1}, ${offset + 2}, ${offset + 3}, ${offset + 4})`);
+    values.push(q.attempt_id, q.question_id, q.display_order, JSON.stringify(q.choice_order));
+  });
+  await dbQuery(
+    `INSERT INTO attempt_questions (attempt_id, question_id, display_order, choice_order)
+     VALUES ${placeholders.join(", ")}`,
+    values
+  );
 }
 
 export async function getAttemptQuestions(attemptId: string): Promise<AttemptQuestionRow[]> {
@@ -354,22 +360,35 @@ export async function getCategoryStats(deviceId: string) {
       a.category === b.category ? a.level - b.level : a.category.localeCompare(b.category)
     );
   }
-  const rows = await dbQuery(
-    `SELECT
-       q.category,
-       q.level,
-       COUNT(DISTINCT q.id)::int AS total,
-       COUNT(DISTINCT aa.question_id)::int AS answered,
-       COUNT(DISTINCT CASE WHEN aa.is_correct THEN aa.question_id END)::int AS correct
-     FROM sg_questions q
-     LEFT JOIN attempt_questions aq ON aq.question_id = q.id
-     LEFT JOIN attempts a ON a.id = aq.attempt_id AND a.device_id = $1 AND a.status = 'finished'
-     LEFT JOIN attempt_answers aa ON aa.attempt_id = a.id AND aa.question_id = q.id
-     WHERE q.app_key = $2
-     GROUP BY q.category, q.level
-     ORDER BY q.category, q.level`,
-    [deviceId, APP_KEY]
-  );
+  // Optimized: two parallel queries instead of one heavy JOIN
+  const [questionCounts, answerStats] = await Promise.all([
+    dbQuery(
+      `SELECT category, level, COUNT(*)::int AS total
+       FROM sg_questions WHERE app_key = $1
+       GROUP BY category, level ORDER BY category, level`,
+      [APP_KEY]
+    ),
+    dbQuery(
+      `SELECT q.category, q.level,
+              COUNT(DISTINCT aa.question_id)::int AS answered,
+              COUNT(DISTINCT CASE WHEN aa.is_correct THEN aa.question_id END)::int AS correct
+       FROM attempt_answers aa
+       JOIN attempts a ON a.id = aa.attempt_id AND a.device_id = $1 AND a.status = 'finished'
+       JOIN attempt_questions aq ON aq.attempt_id = a.id AND aq.question_id = aa.question_id
+       JOIN sg_questions q ON q.id = aa.question_id AND q.app_key = $2
+       GROUP BY q.category, q.level`,
+      [deviceId, APP_KEY]
+    )
+  ]);
+  const statsMap = new Map();
+  for (const s of answerStats) {
+    statsMap.set(s.category + '|' + s.level, { answered: s.answered, correct: s.correct });
+  }
+  const rows = questionCounts.map((q) => {
+    const key = q.category + '|' + q.level;
+    const stats = statsMap.get(key);
+    return { category: q.category, level: q.level, total: q.total, answered: stats?.answered ?? 0, correct: stats?.correct ?? 0 };
+  });
   return rows;
 }
 
