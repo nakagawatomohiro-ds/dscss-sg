@@ -1,7 +1,13 @@
 import { neon } from "@neondatabase/serverless";
 
+// Cache the neon instance to avoid recreating on every query
+let _sql: ReturnType<typeof neon> | null = null;
+
 export function getDb() {
-  return neon(process.env.DATABASE_URL!);
+  if (!_sql) {
+    _sql = neon(process.env.DATABASE_URL!);
+  }
+  return _sql;
 }
 
 /**
@@ -11,6 +17,5 @@ export function getDb() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function query(text: string, params?: unknown[]): Promise<any[]> {
   const sql = getDb();
-  // Use .query() method for conventional parameterized queries
   return sql.query(text, params ?? []);
 }
