@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import QuestionCard from "@/components/QuestionCard";
 import Progress from "@/components/Progress";
 import Timer from "@/components/Timer";
+import { LoadingScreen, ButtonSpinner } from "@/components/Spinner";
 import { QuestionForClient } from "@/lib/types";
 
 interface AttemptData {
@@ -32,6 +33,7 @@ export default function QuizPage() {
   const [answeredIds, setAnsweredIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [timerRunning, setTimerRunning] = useState(true);
+  const [abandoning, setAbandoning] = useState(false);
 
   const loadAttempt = useCallback(async () => {
     if (!attemptId) return;
@@ -44,7 +46,6 @@ export default function QuizPage() {
     const d: AttemptData = await res.json();
     setData(d);
     setAnsweredIds(new Set(d.answeredQuestionIds));
-    // Resume from last answered
     const nextIdx = d.answeredQuestionIds.length;
     setCurrentIdx(Math.min(nextIdx, d.questions.length - 1));
     setCorrectCount(d.attempt.correctCount);
@@ -61,11 +62,9 @@ export default function QuizPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ attemptId, questionId, chosenDisplayIndex }),
     });
-
     if (!res.ok) {
       throw new Error("Failed to submit answer");
     }
-
     const result = await res.json();
     setAnsweredIds((prev) => new Set([...Array.from(prev), questionId]));
     if (result.isCorrect) {
@@ -79,14 +78,12 @@ export default function QuizPage() {
     const isLast = currentIdx >= data.questions.length - 1;
 
     if (isLast) {
-      // Finish attempt
       setTimerRunning(false);
       const res = await fetch("/api/attempts/finish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attemptId }),
       });
-
       if (res.ok) {
         router.push(`/result/${attemptId}`);
       } else {
@@ -100,6 +97,7 @@ export default function QuizPage() {
 
   const handleAbandon = async () => {
     if (!confirm("学習を中断しますか？")) return;
+    setAbandoning(true);
     setTimerRunning(false);
     await fetch("/api/attempts/abandon", {
       method: "POST",
@@ -110,11 +108,7 @@ export default function QuizPage() {
   };
 
   if (loading || !data) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-gray-400 text-lg">読み込み中...</div>
-      </div>
-    );
+    return <LoadingScreen message="問題を読み込み中..." />;
   }
 
   const currentQuestion = data.questions[currentIdx];
@@ -132,9 +126,10 @@ export default function QuizPage() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={handleAbandon}
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            disabled={abandoning}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
           >
-            ← 中断
+            {abandoning ? <ButtonSpinner label="中断中..." spinnerColor="gray" /> : "← 中断"}
           </button>
           <span className="text-sm font-semibold text-gray-700">{modeLabel}</span>
           <Timer isRunning={timerRunning} />
