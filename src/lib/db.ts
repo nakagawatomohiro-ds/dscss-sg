@@ -17,5 +17,6 @@ export function getDb() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function query(text: string, params?: unknown[]): Promise<any[]> {
   const sql = getDb();
-  return sql.query(text, params ?? []);
+  // Cast result to any[] since sql.query returns a union type
+  return sql.query(text, params ?? []) as Promise<any[]>;
 }
